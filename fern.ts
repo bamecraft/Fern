@@ -1,10 +1,40 @@
-import { Command } from "https://deno.land/x/cliffy/command/mod.ts";
-import { download } from 'https://deno.land/x/download/mod.ts';
-import { readZip } from 'https://deno.land/x/jszip/mod.ts';
-import * as path from "https://deno.land/std/path/mod.ts";
-import * as color from "https://deno.land/std/fmt/colors.ts";
+import { Command } from "https://deno.land/x/cliffy@v0.20.1/command/mod.ts";
+import { download } from 'https://deno.land/x/download@v1.0.1/mod.ts';
+import { exec } from "https://deno.land/x/exec@0.0.5/mod.ts";
+import { readZip } from 'https://deno.land/x/jszip@0.11.0/mod.ts';
+import * as path from "https://deno.land/std@0.125.0/path/mod.ts";
+import * as color from "https://deno.land/std@0.125.0/fmt/colors.ts";
 
-function CreateUrlFromTemplate(template: string, variables: { [x: string]: string; })
+let config:
+	{
+		config_version: string;
+		root_directory: string;
+		update_pre_script: string;
+		update_post_script: string;
+		providers:
+		{
+			[x: string]:
+			{
+				update_check_url: string;
+				update_check_query: string;
+				skip_update_check: boolean;
+				download_url: string;
+			};
+		};
+		use_latest:
+		[{
+				name: string;
+				comment: string;
+				provider: string;
+				relative_directory: string;
+				pre_script: string;
+				post_script: string;
+				[x: string]: string | number | boolean;
+		}];
+	};
+let pot: { [x: string]: { version: string | number; }; };
+
+function CreateUrlFromTemplate(template: string, variables: { [x: string]: string | number | boolean; })
 {
 	return template.replace(/{([^{]+)}/g, (_, varName: string) =>
 	{
@@ -12,7 +42,7 @@ function CreateUrlFromTemplate(template: string, variables: { [x: string]: strin
 		{
 			throw (`${varName} is not defined!`);
 		}
-		return variables[varName] == null ? '' : variables[varName];
+		return variables[varName] == null ? '' : String(variables[varName]);
 	});
 }
 
@@ -20,14 +50,13 @@ async function EggcrackPluginJar(jarPath: string)
 {
 	const zip = await readZip(jarPath);
 	const pluginYml: string = (await zip.file('plugin.yml').async('string')).replace(/\r\n|\r/g,'\n');
-	const pluginName: string = pluginYml.match(/name: (.*)/)![1];
+	// const pluginName: string = pluginYml.match(/name: (.*)/)![1];
 	const pluginVersion: string = pluginYml.match(/version: (.*)/)![1];
 
-	console.log(pluginName);
-	console.log(pluginVersion);
+	return pluginVersion;
 }
 
-async function GetLocalVersion(config: any, pot: any, pluginName: string)
+async function GetLocalVersion(pluginName: string)
 {
 	pluginName = pluginName.toLowerCase();
 	if(pot[pluginName])
@@ -40,13 +69,15 @@ async function GetLocalVersion(config: any, pot: any, pluginName: string)
 		{
 			if(entry.isFile && entry.name.toLowerCase().includes(pluginName.toLowerCase()))
 			{
-				EggcrackPluginJar(path.join(config.root_directory, 'plugins', entry.name))
+				return await EggcrackPluginJar(path.join(config.root_directory, 'plugins', entry.name));
 			}
 		}
+
+		return 0;
 	}
 }
 
-async function GetLatestVersion(config: any, item: any)
+async function GetLatestVersion(item: { provider: string; [x: string]: string | number | boolean; })
 {
 	const url: string = CreateUrlFromTemplate(config.providers[item.provider].update_check_url, item)
 	let result = (await (await fetch(url)).json());
@@ -73,11 +104,17 @@ async function DownloadFile(url: string, destination: string)
 	});
 }
 
-async function CheckUpdate(config: any, pot: any)
+async function CheckUpdate()
 {
 	for(const item of config.use_latest)
 	{
 		console.log(`Checking ${item.name} from ${item.provider}`);
+
+		if(item.pre_script)
+		{
+			console.log(color.gray(`Executing Pre-Script: ${item.pre_script}`));
+			await exec(item.pre_script);
+		}
 
 		if(!config.providers[item.provider])
 		{
@@ -87,12 +124,19 @@ async function CheckUpdate(config: any, pot: any)
 		{
 			if(!config.providers[item.provider].update_check_url)
 			{
-				throw(`update_check_url is not defined in provider: ${item.provider}`);
+				if(config.providers[item.provider].skip_update_check && config.providers[item.provider].skip_update_check == true)
+				{
+					console.log('Skipping update check...');
+				}
+				else
+				{
+					throw(`update_check_url is not defined in provider: ${item.provider}`);
+				}
 			}
 			else
 			{
-				const latest = await GetLatestVersion(config, item);
-				const local = await GetLocalVersion(config, pot, item.name);
+				const latest = await GetLatestVersion(item);
+				const local = await GetLocalVersion(item.name);
 
 				const latestVersion = typeof(latest) == 'string' ? latest.split('.') : latest;
 				const localVersion = typeof(local) == 'string' ? local.split('.') : local;
@@ -111,25 +155,43 @@ async function CheckUpdate(config: any, pot: any)
 				}
 			}
 		}
+
+		if(item.post_script)
+		{
+			console.log(color.gray(`Executing Post-Script: ${item.post_script}`));
+			await exec(item.post_script);
+		}
 	}
 }
 
 await new Command()
 	.name("fern")
-	.version("0.1")
+	.version("0.2")
 	.description("MeaaC (Minecraft environment as a Code) utility tool.")
-	.option('-c, --config-location <Directory:string>', 'Specify config location', {default: './', global: true})
-	.option('-p, --profile-name <Name:string>', 'Specify profile name', {default: 'fern', global: true})
+	.option('-c, --config-location <Directory:string>', 'Specify config location.', {default: './', global: true})
+	.option('-p, --profile-name <Name:string>', 'Specify profile name.', {default: 'fern', global: true})
 
 	.command('update', 'Update environment to latest.')
 	.action(async (options: {[options: string]: string | number | boolean}, _args: string[]) =>
 	{
 		console.log(color.bold(color.green('Starting update...')));
-		const config = JSON.parse(await Deno.readTextFile(path.resolve(path.join(`${options.configLocation}`, `${options.profileName}.json`))));
-		const pot = JSON.parse(await Deno.readTextFile(path.resolve(path.join(`${options.configLocation}`, `${options.profileName}-pot.json`))));
+		config = JSON.parse(await Deno.readTextFile(path.resolve(path.join(`${options.configLocation}`, `${options.profileName}.json`))));
+		pot = JSON.parse(await Deno.readTextFile(path.resolve(path.join(`${options.configLocation}`, `${options.profileName}-pot.json`))));
 
-		await CheckUpdate(config, pot);
+		if(config.update_pre_script)
+		{
+			console.log(color.gray(`Executing Update Pre-Script: ${config.update_pre_script}`))
+			await exec(config.update_pre_script);
+		}
+
+		await CheckUpdate();
 		await Deno.writeTextFile(path.resolve(path.join(`${options.configLocation}`, `${options.profileName}-pot.json`)), JSON.stringify(pot));
+
+		if(config.update_post_script)
+		{
+			console.log(color.gray(`Executing Update Post-Script: ${config.update_post_script}`))
+			await exec(config.update_post_script);
+		}
 	})
 
 	.reset()

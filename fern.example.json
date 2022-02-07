@@ -2,6 +2,9 @@
 	"config_version": "2",
 	"root_directory": "./",
 
+	"update_pre_script": "echo Hello!",
+	"update_post_script": "echo Finished!",
+
 	"providers":
 	{
 		"spigot":
@@ -33,7 +36,9 @@
 			"comment": "行動記録プラグイン",
 			"provider": "spigot",
 			"resource_id": "8631",
-			"relative_directory": "plugins"
+			"relative_directory": "plugins",
+			"pre_script": "bash -c \"ls | grep 'paper'\"",
+			"post_script": ""
 		}
 	]
 }
