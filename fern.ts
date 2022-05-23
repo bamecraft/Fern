@@ -175,8 +175,19 @@ await new Command()
 	.action(async (options: {[options: string]: string | number | boolean}, _args: string[]) =>
 	{
 		console.log(color.bold(color.green('Starting update...')));
-		config = JSON.parse(await Deno.readTextFile(path.resolve(path.join(`${options.configLocation}`, `${options.profileName}.json`))));
-		pot = JSON.parse(await Deno.readTextFile(path.resolve(path.join(`${options.configLocation}`, `${options.profileName}-pot.json`))));
+		
+		try {
+			config = JSON.parse(await Deno.readTextFile(path.resolve(path.join(`${options.configLocation}`, `${options.profileName}.json`))));
+		} catch {
+			console.log(color.bold(color.red('Error: Failed to load / parse config file.')))
+			Deno.exit(1)
+		}
+		try {
+			pot = JSON.parse(await Deno.readTextFile(path.resolve(path.join(`${options.configLocation}`, `${options.profileName}-pot.json`))));
+		} catch {
+			console.log(color.bold(color.red('Error: Failed to load / parse pot file.')))
+			Deno.exit(1)
+		}
 
 		if(config.update_pre_script)
 		{
