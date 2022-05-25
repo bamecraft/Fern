@@ -1,44 +1,40 @@
 {
-	"config_version": "2",
-	"root_directory": "./",
+  "config_version": "2",
+  "root_directory": "./",
 
-	"update_pre_script": "echo Hello!",
-	"update_post_script": "echo Finished!",
+  "update_pre_script": "echo Hello!",
+  "update_post_script": "echo Finished!",
 
-	"providers":
-	{
-		"spigot":
-		{
-			"update_check_url": "https://api.spiget.org/v2/resources/{resource_id}/versions?size=100&sort=-name",
-			"update_check_query": "0.name",
-			"download_url": "https://api.spiget.org/v2/resources/{resource_id}/download"
-		},
+  "providers": {
+    "spigot": {
+      "update_check_url": "https://api.spiget.org/v2/resources/{resource_id}/versions?size=100&sort=-name",
+      "update_check_query": "0.name",
+      "download_url": "https://api.spiget.org/v2/resources/{resource_id}/download"
+    },
 
-		"paper":
-		{
-			"update_check_url": "https://papermc.io/api/v2/projects/paper/versions/{minecraft_version}",
-			"update_check_query": "builds.-1",
-			"download_url": "https://papermc.io/api/v2/projects/paper/versions/{minecraft_version}/builds/{VERSION}/downloads/paper-{minecraft_version}-{VERSION}.jar"
-		}
-	},
+    "paper": {
+      "update_check_url": "https://papermc.io/api/v2/projects/paper/versions/{minecraft_version}",
+      "update_check_query": "builds.-1",
+      "download_url": "https://papermc.io/api/v2/projects/paper/versions/{minecraft_version}/builds/{VERSION}/downloads/paper-{minecraft_version}-{VERSION}.jar"
+    }
+  },
 
-	"use_latest":
-	[
-		{
-			"name": "Paper",
-			"comment": "マインクラフトサーバー",
-			"provider": "paper",
-			"minecraft_version": "1.18.1",
-			"relative_directory": "."
-		},
-		{
-			"name": "CoreProtect",
-			"comment": "行動記録プラグイン",
-			"provider": "spigot",
-			"resource_id": "8631",
-			"relative_directory": "plugins",
-			"pre_script": "bash -c \"ls | grep 'paper'\"",
-			"post_script": ""
-		}
-	]
+  "use_latest": [
+    {
+      "name": "Paper",
+      "comment": "マインクラフトサーバー",
+      "provider": "paper",
+      "minecraft_version": "1.18.1",
+      "relative_directory": "."
+    },
+    {
+      "name": "CoreProtect",
+      "comment": "行動記録プラグイン",
+      "provider": "spigot",
+      "resource_id": "8631",
+      "relative_directory": "plugins",
+      "pre_script": "bash -c \"ls | grep 'paper'\"",
+      "post_script": ""
+    }
+  ]
 }
