@@ -34,21 +34,22 @@ function CreateUrlFromTemplate(
   template: string,
   variables: { [x: string]: string | number | boolean },
 ) {
-  return template.replace(/{([^{]+)}/g, (_, varName: string) => {
-    if (variables[varName] == null) {
-      throw (`${varName} is not defined!`);
-    }
-    return variables[varName] == null ? "" : String(variables[varName]);
-  });
+  do {
+    template = template.replace(/{([^{]+)}/g, (_, varName: string) => {
+      if (variables[varName] == null) {
+        throw (`${varName} is not defined!`);
+      }
+      return variables[varName] == null ? "" : String(variables[varName]);
+    });
+  } while (template.includes("{"));
+  return template;
 }
 
 async function EggcrackPluginJar(jarPath: string) {
   const zip = await readZip(jarPath);
   const pluginYml: string = (await zip.file("plugin.yml").async("string"))
     .replace(/\r\n|\r/g, "\n");
-  // const pluginName: string = pluginYml.match(/name: (.*)/)![1];
   const pluginVersion: string = pluginYml.match(/version: (.*)/)![1];
-
   return pluginVersion;
 }
 
@@ -69,7 +70,6 @@ async function GetLocalVersion(pluginName: string) {
         );
       }
     }
-
     return 0;
   }
 }
@@ -95,6 +95,7 @@ async function GetLatestVersion(
 }
 
 async function DownloadFile(url: string, destination: string) {
+  console.log(`Downloading ${color.green(url)} to ${color.green(destination)}`);
   await download(url, {
     dir: path.dirname(destination),
     file: path.basename(destination),
@@ -123,6 +124,19 @@ async function CheckUpdate() {
             config.providers[item.provider].skip_update_check == true
           ) {
             console.log("Skipping update check...");
+            await DownloadFile(
+              CreateUrlFromTemplate(
+                config.providers[item.provider].download_url,
+                item,
+              ),
+              path.resolve(
+                path.join(
+                  config.root_directory,
+                  item.relative_directory,
+                  `${item.name}.jar`,
+                ),
+              ),
+            );
           } else {
             throw (`update_check_url is not defined in provider: ${item.provider}`);
           }

@@ -16,6 +16,11 @@
       "update_check_url": "https://api.papermc.io/v2/projects/paper/versions/{minecraft_version}",
       "update_check_query": "builds.-1",
       "download_url": "https://api.papermc.io/v2/projects/paper/versions/{minecraft_version}/builds/{VERSION}/downloads/paper-{minecraft_version}-{VERSION}.jar"
+    },
+
+    "direct": {
+      "skip_update_check": true,
+      "download_url": "{download_url}"
     }
   },
 
@@ -35,6 +40,21 @@
       "relative_directory": "plugins",
       "pre_script": "bash -c \"ls | grep 'paper'\"",
       "post_script": ""
+    },
+    {
+      "name": "Direct1",
+      "comment": "ダイレクトテスト1",
+      "provider": "direct",
+      "download_url": "https://example.com/",
+      "relative_directory": "."
+    },
+    {
+      "name": "Direct2",
+      "comment": "ダイレクトテスト2",
+      "provider": "direct",
+      "download_url": "https://{url}/",
+      "url": "example.com",
+      "relative_directory": "."
     }
   ]
 }
