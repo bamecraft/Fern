@@ -198,10 +198,12 @@ await new Command()
             ),
           ),
         );
-      } catch {
+      } catch (e) {
         console.log(
           color.bold(color.red("Error: Failed to load / parse config file.")),
         );
+        console.log("You might want to run `fern init` first.");
+        console.log(color.gray(e.message));
         Deno.exit(1);
       }
       try {
@@ -215,10 +217,12 @@ await new Command()
             ),
           ),
         );
-      } catch {
+      } catch (e) {
         console.log(
           color.bold(color.red("Error: Failed to load / parse pot file.")),
         );
+        console.log("You might want to run `fern init` first.");
+        console.log(color.gray(e.message));
         Deno.exit(1);
       }
 
@@ -252,5 +256,34 @@ await new Command()
       }
     },
   )
+  .command("init", "Initialize environment.")
+  .action(async (
+    options: { [options: string]: string | number | boolean },
+    _args: string[],
+  ) => {
+    try {
+      await Deno.create(path.resolve(
+        path.join(
+          `${options.configLocation}`,
+          `${options.profileName}.json`,
+        ),
+      ));
+
+      await Deno.create(
+        path.resolve(
+          path.join(
+            `${options.configLocation}`,
+            `${options.profileName}-pot.json`,
+          ),
+        ),
+      );
+    } catch (e) {
+      console.log(
+        color.bold(color.red("Error: Failed to initialize.")),
+      );
+      console.log(color.gray(e.message));
+      Deno.exit(1);
+    }
+  })
   .reset()
   .parse(Deno.args);
