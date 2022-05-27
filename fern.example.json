@@ -13,9 +13,9 @@
     },
 
     "paper": {
-      "update_check_url": "https://papermc.io/api/v2/projects/paper/versions/{minecraft_version}",
+      "update_check_url": "https://api.papermc.io/v2/projects/paper/versions/{minecraft_version}",
       "update_check_query": "builds.-1",
-      "download_url": "https://papermc.io/api/v2/projects/paper/versions/{minecraft_version}/builds/{VERSION}/downloads/paper-{minecraft_version}-{VERSION}.jar"
+      "download_url": "https://api.papermc.io/v2/projects/paper/versions/{minecraft_version}/builds/{VERSION}/downloads/paper-{minecraft_version}-{VERSION}.jar"
     }
   },
 
