@@ -105,64 +105,73 @@ async function DownloadFile(url: string, destination: string) {
 }
 
 async function CheckUpdate() {
-  for (const item of config.use_latest) {
-    console.log(`Checking ${item.name} from ${item.provider}`);
+  try {
+    for (const item of config.use_latest) {
+      console.log(`Checking ${item.name} from ${item.provider}`);
 
-    if (item.pre_script) {
-      console.log(color.gray(`Executing Pre-Script: ${item.pre_script}`));
-      await exec(item.pre_script);
-    }
+      if (item.pre_script) {
+        console.log(color.gray(`Executing Pre-Script: ${item.pre_script}`));
+        await exec(item.pre_script);
+      }
 
-    if (!config.providers[item.provider]) {
-      throw (`${item.provider} is not defined in providers list`);
-    } else {
-      if (!config.providers[item.provider].update_check_url) {
-        if (
-          config.providers[item.provider].skip_update_check &&
-          config.providers[item.provider].skip_update_check == true
-        ) {
-          console.log("Skipping update check...");
-        } else {
-          throw (`update_check_url is not defined in provider: ${item.provider}`);
-        }
+      if (!config.providers[item.provider]) {
+        throw (`${item.provider} is not defined in providers list`);
       } else {
-        const latest = await GetLatestVersion(item);
-        const local = await GetLocalVersion(item.name);
-
-        const latestVersion = typeof (latest) == "string"
-          ? latest.split(".")
-          : latest;
-        const localVersion = typeof (local) == "string"
-          ? local.split(".")
-          : local;
-
-        if (latestVersion > localVersion) {
-          item["VERSION"] = latest;
-          await DownloadFile(
-            CreateUrlFromTemplate(
-              config.providers[item.provider].download_url,
-              item,
-            ),
-            path.resolve(
-              path.join(
-                config.root_directory,
-                item.relative_directory,
-                `${item.name}.jar`,
-              ),
-            ),
-          );
-          pot[(item.name).toLowerCase()].version = latest;
-          console.log(`    Updated ${local} -> ${latest}`);
+        if (!config.providers[item.provider].update_check_url) {
+          if (
+            config.providers[item.provider].skip_update_check &&
+            config.providers[item.provider].skip_update_check == true
+          ) {
+            console.log("Skipping update check...");
+          } else {
+            throw (`update_check_url is not defined in provider: ${item.provider}`);
+          }
         } else {
-          console.log(`    ${local} is latest`);
+          const latest = await GetLatestVersion(item);
+          const local = await GetLocalVersion(item.name);
+
+          const latestVersion = typeof (latest) == "string"
+            ? latest.split(".")
+            : latest;
+          const localVersion = typeof (local) == "string"
+            ? local.split(".")
+            : local;
+
+          if (latestVersion > localVersion) {
+            item["VERSION"] = latest;
+            await DownloadFile(
+              CreateUrlFromTemplate(
+                config.providers[item.provider].download_url,
+                item,
+              ),
+              path.resolve(
+                path.join(
+                  config.root_directory,
+                  item.relative_directory,
+                  `${item.name}.jar`,
+                ),
+              ),
+            );
+            pot[(item.name).toLowerCase()].version = latest;
+            console.log(`    Updated ${local} -> ${latest}`);
+          } else {
+            console.log(`    ${local} is latest`);
+          }
         }
       }
-    }
 
-    if (item.post_script) {
-      console.log(color.gray(`Executing Post-Script: ${item.post_script}`));
-      await exec(item.post_script);
+      if (item.post_script) {
+        console.log(color.gray(`Executing Post-Script: ${item.post_script}`));
+        await exec(item.post_script);
+      }
     }
+  } catch (e) {
+    console.log(
+      color.bold(color.red("Error: An error occured while update command.")),
+    );
+    console.log("Please make sure that your fern.json is written correctly.");
+    console.log(color.gray(e.message));
+    Deno.exit(1);
   }
 }
 
