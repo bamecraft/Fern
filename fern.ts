@@ -1,5 +1,5 @@
 import { Command } from "https://deno.land/x/cliffy@v0.20.1/command/mod.ts";
-import { download } from "https://raw.githubusercontent.com/katabame/deno-download/730412f45233e9f181ae31fbec314dcc833d8fca/mod.ts";
+import { download } from "https://pax.deno.dev/katabame/deno-download";
 import { exec } from "https://deno.land/x/exec@0.0.5/mod.ts";
 import { readZip } from "https://deno.land/x/jszip@0.11.0/mod.ts";
 import * as path from "https://deno.land/std@0.125.0/path/mod.ts";
@@ -95,20 +95,34 @@ async function GetLatestVersion(
 }
 
 async function DownloadFile(url: string, destination: string) {
-  console.log(`Downloading ${color.green(url)} to ${color.green(destination)}`);
-  await download(url, {
-    dir: path.dirname(destination),
-    file: path.basename(destination),
-  })
-    .catch((err) => {
-      console.log(`[${path.basename}]    ${err}`);
+  try {
+    const downloadedInfo = await download(url, {
+      dir: path.dirname(destination),
+      file: path.basename(destination),
     });
+    console.log(
+      color.gray(
+        `Downloaded ${color.underline(url)} to ${
+          color.underline(downloadedInfo.fullPath)
+        }`,
+      ),
+    );
+  } catch (e) {
+    console.log(
+      color.bold(color.red("Error: An error occured while downloading file.")),
+    );
+    console.log(color.underline(color.gray("Error details:")));
+    console.log(color.gray(e.message));
+    console.log(color.red("Aborted download..."));
+  }
 }
 
 async function CheckUpdate() {
   try {
     for (const item of config.use_latest) {
-      console.log(`Checking ${item.name} from ${item.provider}`);
+      console.log(
+        color.bold(color.gray(`Checking ${item.name} from ${item.provider}`)),
+      );
 
       if (item.pre_script) {
         console.log(color.gray(`Executing Pre-Script: ${item.pre_script}`));
@@ -123,7 +137,7 @@ async function CheckUpdate() {
             config.providers[item.provider].skip_update_check &&
             config.providers[item.provider].skip_update_check == true
           ) {
-            console.log("Skipping update check...");
+            console.log(color.gray("Skipping update check..."));
             await DownloadFile(
               CreateUrlFromTemplate(
                 config.providers[item.provider].download_url,
@@ -167,9 +181,9 @@ async function CheckUpdate() {
               ),
             );
             pot[(item.name).toLowerCase()].version = latest;
-            console.log(`    Updated ${local} -> ${latest}`);
+            console.log(color.cyan(`    Updated ${local} -> ${latest}`));
           } else {
-            console.log(`    ${local} is latest`);
+            console.log(color.gray(`    ${local} is already latest`));
           }
         }
       }
@@ -183,7 +197,14 @@ async function CheckUpdate() {
     console.log(
       color.bold(color.red("Error: An error occured while update command.")),
     );
-    console.log("Please make sure that your fern.json is written correctly.");
+    console.log(
+      color.italic(
+        color.gray(
+          "Hint: Please make sure that your fern.json is written correctly.",
+        ),
+      ),
+    );
+    console.log(color.underline(color.gray("Error details:")));
     console.log(color.gray(e.message));
     Deno.exit(1);
   }
@@ -225,7 +246,12 @@ await new Command()
         console.log(
           color.bold(color.red("Error: Failed to load / parse config file.")),
         );
-        console.log("You might want to run `fern init` first.");
+        console.log(
+          color.italic(
+            color.gray("Hint: You might want to run `fern init` first."),
+          ),
+        );
+        console.log(color.underline(color.gray("Error details:")));
         console.log(color.gray(e.message));
         Deno.exit(1);
       }
@@ -244,7 +270,12 @@ await new Command()
         console.log(
           color.bold(color.red("Error: Failed to load / parse pot file.")),
         );
-        console.log("You might want to run `fern init` first.");
+        console.log(
+          color.italic(
+            color.gray("Hint: You might want to run `fern init` first."),
+          ),
+        );
+        console.log(color.underline(color.gray("Error details:")));
         console.log(color.gray(e.message));
         Deno.exit(1);
       }
@@ -277,6 +308,8 @@ await new Command()
         );
         await exec(config.update_post_script);
       }
+
+      console.log(color.bold(color.green("Update finished.")));
     },
   )
   .command("init", "Initialize environment.")
@@ -284,29 +317,27 @@ await new Command()
     options: { [options: string]: string | number | boolean },
     _args: string[],
   ) => {
+    console.log(color.bold(color.green("Starting initialization...")));
     try {
-      await Deno.create(path.resolve(
-        path.join(
-          `${options.configLocation}`,
-          `${options.profileName}.json`,
-        ),
-      ));
-
-      await Deno.create(
+      await DownloadFile(
+        "https://bamecraft.github.io/Fern/fern.example.json",
+        path.resolve(path.join(`${options.configLocation}`, "example")),
+      );
+      await DownloadFile(
+        "https://bamecraft.github.io/Fern/fern.example-pot.json",
         path.resolve(
-          path.join(
-            `${options.configLocation}`,
-            `${options.profileName}-pot.json`,
-          ),
+          path.join(`${options.configLocation}`, "example-pot"),
         ),
       );
     } catch (e) {
       console.log(
         color.bold(color.red("Error: Failed to initialize.")),
       );
+      console.log(color.underline(color.gray("Error details:")));
       console.log(color.gray(e.message));
       Deno.exit(1);
     }
+    console.log(color.bold(color.green("Initialization finished.")));
   })
   .reset()
   .parse(Deno.args);
