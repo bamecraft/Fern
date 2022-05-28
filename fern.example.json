@@ -21,6 +21,11 @@
     "direct": {
       "skip_update_check": true,
       "download_url": "{download_url}"
+    },
+
+    "github": {
+      "skip_update_check": true,
+      "download_url": "https://github.com/{repository}/releases/latest/download/{asset_name}"
     }
   },
 
@@ -36,8 +41,9 @@
       "name": "CoreProtect",
       "comment": "行動記録プラグイン",
       "provider": "spigot",
-      "resource_id": "8631",
       "relative_directory": "plugins",
+
+      "resource_id": "8631",
       "pre_script": "bash -c \"ls | grep 'paper'\"",
       "post_script": ""
     },
@@ -45,16 +51,24 @@
       "name": "Direct1",
       "comment": "ダイレクトテスト1",
       "provider": "direct",
-      "download_url": "https://example.com/",
-      "relative_directory": "."
+      "relative_directory": ".",
+      "download_url": "https://example.com/"
     },
     {
       "name": "Direct2",
       "comment": "ダイレクトテスト2",
       "provider": "direct",
+      "relative_directory": ".",
       "download_url": "https://{url}/",
-      "url": "example.com",
-      "relative_directory": "."
+      "url": "example.com"
+    },
+    {
+      "name": "LunaChat",
+      "comment": "チャット日本語変換プラグイン",
+      "provider": "github",
+      "relative_directory": ".",
+      "repository": "ucchyocean/LunaChat",
+      "asset_name": "LunaChat.jar"
     }
   ]
 }

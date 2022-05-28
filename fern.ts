@@ -1,5 +1,5 @@
 import { Command } from "https://deno.land/x/cliffy@v0.20.1/command/mod.ts";
-import { download } from "https://deno.land/x/download@v1.0.1/mod.ts";
+import { download } from "https://raw.githubusercontent.com/katabame/deno-download/730412f45233e9f181ae31fbec314dcc833d8fca/mod.ts";
 import { exec } from "https://deno.land/x/exec@0.0.5/mod.ts";
 import { readZip } from "https://deno.land/x/jszip@0.11.0/mod.ts";
 import * as path from "https://deno.land/std@0.125.0/path/mod.ts";
@@ -133,7 +133,7 @@ async function CheckUpdate() {
                 path.join(
                   config.root_directory,
                   item.relative_directory,
-                  `${item.name}.jar`,
+                  item.name,
                 ),
               ),
             );
@@ -162,7 +162,7 @@ async function CheckUpdate() {
                 path.join(
                   config.root_directory,
                   item.relative_directory,
-                  `${item.name}.jar`,
+                  item.name,
                 ),
               ),
             );
