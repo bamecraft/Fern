@@ -1,0 +1,27 @@
+name: Deno CD
+
+on:
+  release:
+    types: [released]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+
+      - name: Compile executable
+        run: deno compile --allow-read --allow-write --allow-run --allow-net --reload fern.ts
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: fern
+          path: fern
