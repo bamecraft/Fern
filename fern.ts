@@ -2,6 +2,7 @@ import { Command } from "https://deno.land/x/cliffy@v0.20.1/command/mod.ts";
 import { download } from "https://pax.deno.dev/katabame/deno-download";
 import { exec } from "https://deno.land/x/exec@0.0.5/mod.ts";
 import { readZip } from "https://deno.land/x/jszip@0.11.0/mod.ts";
+import { expandGlob } from "https://deno.land/std@0.141.0/fs/mod.ts";
 import * as path from "https://deno.land/std@0.125.0/path/mod.ts";
 import * as color from "https://deno.land/std@0.125.0/fmt/colors.ts";
 
@@ -28,7 +29,9 @@ let config: {
     [x: string]: string | number | boolean;
   }];
 };
-let pot: { [x: string]: { version: string | number } };
+let pot: {
+  [x: string]: { version: string | number; [x: string]: string | number };
+};
 
 function CreateUrlFromTemplate(
   template: string,
@@ -338,6 +341,71 @@ await new Command()
       Deno.exit(1);
     }
     console.log(color.bold(color.green("Initialization finished.")));
+  })
+  .command(
+    "import",
+    "Generate config file from current environment. (!EXPERIMENTAL!)",
+  )
+  .action(async (
+    options: { [options: string]: string | number | boolean },
+    _args: string[],
+  ) => {
+    const imported_pot: {
+      [options: string]: Record<string, string | number | boolean>;
+    } = {};
+
+    for await (const paper of expandGlob("./[Pp]aper*.jar")) {
+      try {
+        const zip = await readZip(paper.path);
+        const versionJson: string =
+          (await zip.file("version.json").async("string"))
+            .replace(/\r\n|\r/g, "\n");
+        const paperTarget: string =
+          versionJson.match(/"release_target": "(.*)"/)![1];
+        const paperVersion = Number(
+          paper.name.match(/paper-.*-(\d+).jar/)![1] ?? 0,
+        );
+
+        imported_pot["paper"] = {
+          minecraft_version: paperTarget,
+          version: paperVersion,
+        };
+        console.log(
+          color.green(`Found paper : ${paperTarget} @ ${paperVersion}`),
+        );
+      } catch {
+        continue;
+      }
+    }
+
+    for await (const plugin of expandGlob("plugins/*.jar")) {
+      try {
+        const zip = await readZip(plugin.path);
+        const pluginYml: string = (await zip.file("plugin.yml").async("string"))
+          .replace(/\r\n|\r/g, "\n");
+        const pluginName: string = pluginYml.match(/name: (.*)/)![1];
+        const pluginVersion: string = pluginYml.match(/version: (.*)/)![1];
+
+        imported_pot[pluginName] = {
+          version: pluginVersion,
+        };
+        console.log(
+          color.green(`Found plugin: ${pluginName} @ ${pluginVersion}`),
+        );
+      } catch {
+        continue;
+      }
+    }
+
+    await Deno.writeTextFile(
+      path.resolve(
+        path.join(
+          `${options.configLocation}`,
+          `${options.profileName}-pot.json`,
+        ),
+      ),
+      JSON.stringify(imported_pot),
+    );
   })
   .reset()
   .parse(Deno.args);
