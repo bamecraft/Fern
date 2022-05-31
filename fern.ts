@@ -363,7 +363,7 @@ await new Command()
       use_latest: [],
     };
 
-    pot = [{ pot_version: 3 }];
+    pot = { pot_version: 3 };
 
     for await (const paper of expandGlob("./[Pp]aper*.jar")) {
       try {
@@ -385,7 +385,7 @@ await new Command()
           minecraft_version: paperTarget,
         });
 
-        pot[0]["paper"] = {
+        pot["paper"] = {
           version: paperVersion,
           minecraft_version: paperTarget,
         };
@@ -425,7 +425,7 @@ await new Command()
             resource_id: searchResult.id,
           });
         }
-        pot[0][pluginName] = { version: pluginVersion };
+        pot[pluginName] = { version: pluginVersion };
         console.log(
           color.gray(`Found plugin: ${pluginName} @ ${pluginVersion}`),
         );
