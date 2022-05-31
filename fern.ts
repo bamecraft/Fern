@@ -192,7 +192,7 @@ async function CheckUpdate() {
 
 await new Command()
   .name("fern")
-  .version("0.2")
+  .version("1.0")
   .description("MeaaC (Minecraft environment as a Code) utility tool.")
   .option(
     "-c, --config-location <Directory:string>",
@@ -292,12 +292,15 @@ await new Command()
       console.log(color.bold(color.green("Update finished.")));
     },
   )
-  .command("init", "Initialize environment.")
+  .command(
+    "download_example",
+    "Download example config files. (You might want to run `fern init` than this command)",
+  )
   .action(async (
     options: { [options: string]: string | number | boolean },
     _args: string[],
   ) => {
-    console.log(color.bold(color.green("Starting initialization...")));
+    console.log(color.bold(color.green("Starting download...")));
     try {
       await DownloadFile(
         "https://bamecraft.github.io/Fern/fern.example.json",
@@ -311,23 +314,23 @@ await new Command()
       );
     } catch (e) {
       console.log(
-        color.bold(color.red("Error: Failed to initialize.")),
+        color.bold(color.red("Error: Failed to download.")),
       );
       console.log(color.underline(color.gray("Error details:")));
       console.log(color.gray(e.message));
       Deno.exit(1);
     }
-    console.log(color.bold(color.green("Initialization finished.")));
+    console.log(color.bold(color.green("Download finished.")));
   })
   .command(
-    "import",
-    "Generate config file from current environment. (!EXPERIMENTAL!)",
+    "init",
+    "Generate config files from current environment. (For assist writing config files)",
   )
   .action(async (
     options: { [options: string]: string | number | boolean },
     _args: string[],
   ) => {
-    console.log(color.bold(color.green("Starting import...")));
+    console.log(color.bold(color.green("Starting initialization...")));
 
     config = {
       config_version: 3,
@@ -360,6 +363,8 @@ await new Command()
       use_latest: [],
     };
 
+    pot = [{ pot_version: 3 }];
+
     for await (const paper of expandGlob("./[Pp]aper*.jar")) {
       try {
         const zip = await readZip(paper.path);
@@ -380,7 +385,7 @@ await new Command()
           minecraft_version: paperTarget,
         });
 
-        pot["paper"] = {
+        pot[0]["paper"] = {
           version: paperVersion,
           minecraft_version: paperTarget,
         };
@@ -420,7 +425,7 @@ await new Command()
             resource_id: searchResult.id,
           });
         }
-        pot[pluginName] = { version: pluginVersion };
+        pot[0][pluginName] = { version: pluginVersion };
         console.log(
           color.gray(`Found plugin: ${pluginName} @ ${pluginVersion}`),
         );
@@ -449,7 +454,7 @@ await new Command()
       JSON.stringify(pot),
     );
 
-    console.log(color.bold(color.green("Import finished.")));
+    console.log(color.bold(color.green("Initialization finished.")));
     console.log(
       color.red(
         `! Some entries may be missing or incorrect. Make sure to check the generated ${options.profileName}.json`,
