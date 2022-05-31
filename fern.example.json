@@ -1,5 +1,5 @@
 {
-  "config_version": "2",
+  "config_version": 3,
   "root_directory": "./",
 
   "update_pre_script": "echo Hello!",
@@ -7,7 +7,7 @@
 
   "providers": {
     "spigot": {
-      "update_check_url": "https://api.spiget.org/v2/resources/{resource_id}/versions?size=100&sort=-name",
+      "update_check_url": "https://api.spiget.org/v2/resources/{resource_id}/versions?size=1&sort=-name",
       "update_check_query": "0.name",
       "download_url": "https://api.spiget.org/v2/resources/{resource_id}/download"
     },

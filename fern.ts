@@ -5,33 +5,10 @@ import { readZip } from "https://deno.land/x/jszip@0.11.0/mod.ts";
 import { expandGlob } from "https://deno.land/std@0.141.0/fs/mod.ts";
 import * as path from "https://deno.land/std@0.125.0/path/mod.ts";
 import * as color from "https://deno.land/std@0.125.0/fmt/colors.ts";
+import { Config, Pot } from "./@types/fern.d.ts";
 
-let config: {
-  config_version: string;
-  root_directory: string;
-  update_pre_script: string;
-  update_post_script: string;
-  providers: {
-    [x: string]: {
-      update_check_url: string;
-      update_check_query: string;
-      skip_update_check: boolean;
-      download_url: string;
-    };
-  };
-  use_latest: [{
-    name: string;
-    comment: string;
-    provider: string;
-    relative_directory: string;
-    pre_script: string;
-    post_script: string;
-    [x: string]: string | number | boolean;
-  }];
-};
-let pot: {
-  [x: string]: { version: string | number; [x: string]: string | number };
-};
+let config: Config = {};
+let pot: Pot = {};
 
 function CreateUrlFromTemplate(
   template: string,
@@ -350,9 +327,38 @@ await new Command()
     options: { [options: string]: string | number | boolean },
     _args: string[],
   ) => {
-    const imported_pot: {
-      [options: string]: Record<string, string | number | boolean>;
-    } = {};
+    console.log(color.bold(color.green("Starting import...")));
+
+    config = {
+      config_version: 3,
+      root_directory: "./",
+      providers: {
+        spigot: {
+          update_check_url:
+            "https://api.spiget.org/v2/resources/{resource_id}/versions?size=1&sort=-name",
+          update_check_query: "0.name",
+          download_url:
+            "https://api.spiget.org/v2/resources/{resource_id}/download",
+        },
+        paper: {
+          update_check_url:
+            "https://api.papermc.io/v2/projects/paper/versions/{minecraft_version}",
+          update_check_query: "builds.-1",
+          download_url:
+            "https://api.papermc.io/v2/projects/paper/versions/{minecraft_version}/builds/{VERSION}/downloads/paper-{minecraft_version}-{VERSION}.jar",
+        },
+        direct: {
+          skip_update_check: true,
+          download_url: "{download_url}",
+        },
+        github: {
+          skip_update_check: true,
+          download_url:
+            "https://github.com/{repository}/releases/latest/download/{asset_name}",
+        },
+      },
+      use_latest: [],
+    };
 
     for await (const paper of expandGlob("./[Pp]aper*.jar")) {
       try {
@@ -366,12 +372,21 @@ await new Command()
           paper.name.match(/paper-.*-(\d+).jar/)![1] ?? 0,
         );
 
-        imported_pot["paper"] = {
+        config.use_latest.push({
+          name: "paper",
+          comment: "Paper (Minecraft Server)",
+          provider: "paper",
+          relative_directory: "./",
           minecraft_version: paperTarget,
+        });
+
+        pot["paper"] = {
           version: paperVersion,
+          minecraft_version: paperTarget,
         };
+
         console.log(
-          color.green(`Found paper : ${paperTarget} @ ${paperVersion}`),
+          color.gray(`Found paper : ${paperTarget} @ ${paperVersion}`),
         );
       } catch {
         continue;
@@ -386,11 +401,29 @@ await new Command()
         const pluginName: string = pluginYml.match(/name: (.*)/)![1];
         const pluginVersion: string = pluginYml.match(/version: (.*)/)![1];
 
-        imported_pot[pluginName] = {
-          version: pluginVersion,
-        };
+        const searchResult =
+          (await (await fetch(
+            `https://api.spiget.org/v2/search/resources/${pluginName}?field=name&size=1&sort=-name`,
+          )).json())[0];
+
+        if (searchResult === undefined || searchResult === null) {
+          config.use_latest.push({
+            name: pluginName,
+            provider: "UNKNOWN",
+            relative_directory: "./plugins/",
+          });
+        } else {
+          config.use_latest.push({
+            name: pluginName,
+            comment: `https://www.spigotmc.org/resources/${searchResult.id}`,
+            provider: "spigot",
+            relative_directory: "./plugins/",
+            resource_id: searchResult.id,
+          });
+        }
+        pot[pluginName] = { version: pluginVersion };
         console.log(
-          color.green(`Found plugin: ${pluginName} @ ${pluginVersion}`),
+          color.gray(`Found plugin: ${pluginName} @ ${pluginVersion}`),
         );
       } catch {
         continue;
@@ -401,11 +434,24 @@ await new Command()
       path.resolve(
         path.join(
           `${options.configLocation}`,
+          `${options.profileName}.json`,
+        ),
+      ),
+      JSON.stringify(config),
+    );
+
+    await Deno.writeTextFile(
+      path.resolve(
+        path.join(
+          `${options.configLocation}`,
           `${options.profileName}-pot.json`,
         ),
       ),
-      JSON.stringify(imported_pot),
+      JSON.stringify(pot),
     );
+
+    console.log(color.bold(color.green("Import finished.")));
+    console.log(color.red(`! Some entries may be missing or incorrect. Make sure to check the generated ${options.profileName}.json`));
   })
   .reset()
   .parse(Deno.args);
