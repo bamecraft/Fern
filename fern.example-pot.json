@@ -1,5 +1,5 @@
-{
-  "pot-version": 2,
+[{
+  "pot-version": 3,
   "paper": { "minecraft_version": "1.18.1", "version": 187 },
   "coreprotect": { "version": "20.4" }
-}
+}]
