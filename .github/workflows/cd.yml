@@ -5,7 +5,7 @@ on:
     types: [released]
 
 jobs:
-  test:
+  compile:
     runs-on: ubuntu-latest
 
     steps:
@@ -16,18 +16,9 @@ jobs:
         uses: denoland/setup-deno@v1
         with:
           deno-version: v1.x
-      
-      - name: Setup Deno Unofficial
-        run: |
-          wget https://github.com/LukeChannings/deno-arm64/releases/latest/download/deno-linux-arm64.zip
-          unzip deno-linux-arm64.zip
-          mv deno deno-unofficial
 
       - name: Compile for Linux x86_64
         run: deno compile --allow-read --allow-write --allow-run --allow-net --reload --target x86_64-unknown-linux-gnu --output fern_linux-x86_64 fern.ts
-
-      - name: Compile for Linux arm64
-        run: deno-unofficial compile --allow-read --allow-write --allow-run --allow-net --reload --output fern_linux-arm64 fern.ts
 
       - name: Compile for Windows x86_64
         run: deno compile --allow-read --allow-write --allow-run --allow-net --reload --target x86_64-pc-windows-msvc --output fern_windows-x86_64 fern.ts
@@ -44,7 +35,6 @@ jobs:
           name: fern
           path: |
             fern_linux-x86_64
-            fern_linux-arm64
             fern_windows-x86_64
             fern_darwin-x86_64
             fern_darwin-aarch64
