@@ -192,7 +192,7 @@ async function CheckUpdate() {
 
 await new Command()
   .name("fern")
-  .version("0.2")
+  .version("1.0")
   .description("MeaaC (Minecraft environment as a Code) utility tool.")
   .option(
     "-c, --config-location <Directory:string>",
