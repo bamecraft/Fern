@@ -27,8 +27,8 @@ type UseLatest = {
   [x: string]: { [x: string]: string | number | boolean };
 };
 
-type Pot = {
+type Pot = [{
   pot_version: number;
-} & {
+}] & [{
   [x: string]: { version: string | number; [x: string]: string | number }[];
-};
+}];
