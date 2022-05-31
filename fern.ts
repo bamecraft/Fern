@@ -401,10 +401,9 @@ await new Command()
         const pluginName: string = pluginYml.match(/name: (.*)/)![1];
         const pluginVersion: string = pluginYml.match(/version: (.*)/)![1];
 
-        const searchResult =
-          (await (await fetch(
-            `https://api.spiget.org/v2/search/resources/${pluginName}?field=name&size=1&sort=-name`,
-          )).json())[0];
+        const searchResult = (await (await fetch(
+          `https://api.spiget.org/v2/search/resources/${pluginName}?field=name&size=1&sort=-name`,
+        )).json())[0];
 
         if (searchResult === undefined || searchResult === null) {
           config.use_latest.push({
@@ -451,7 +450,11 @@ await new Command()
     );
 
     console.log(color.bold(color.green("Import finished.")));
-    console.log(color.red(`! Some entries may be missing or incorrect. Make sure to check the generated ${options.profileName}.json`));
+    console.log(
+      color.red(
+        `! Some entries may be missing or incorrect. Make sure to check the generated ${options.profileName}.json`,
+      ),
+    );
   })
   .reset()
   .parse(Deno.args);
