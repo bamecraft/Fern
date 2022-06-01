@@ -29,7 +29,7 @@ async function EggcrackPluginJar(jarPath: string) {
   const zip = await readZip(jarPath);
   const pluginYml: string = (await zip.file("plugin.yml").async("string"))
     .replace(/\r\n|\r/g, "\n");
-  const pluginVersion: string = pluginYml.match(/version: (.*)/)![1];
+  const pluginVersion: string = pluginYml.match(/version: "?'?(.*)"?'?/)![1];
   return pluginVersion;
 }
 
@@ -403,8 +403,9 @@ await new Command()
         const zip = await readZip(plugin.path);
         const pluginYml: string = (await zip.file("plugin.yml").async("string"))
           .replace(/\r\n|\r/g, "\n");
-        const pluginName: string = pluginYml.match(/name: (.*)/)![1];
-        const pluginVersion: string = pluginYml.match(/version: (.*)/)![1];
+        const pluginName: string = pluginYml.match(/name: "?'?(.*)"?'?/)![1];
+        const pluginVersion: string =
+          pluginYml.match(/version: "?'?(.*)"?'?/)![1];
 
         const searchResult = (await (await fetch(
           `https://api.spiget.org/v2/search/resources/${pluginName}?field=name&size=1&sort=-name`,
@@ -418,14 +419,14 @@ await new Command()
           });
         } else {
           config.use_latest.push({
-            name: pluginName,
+            name: pluginName.toLocaleLowerCase(),
             comment: `https://www.spigotmc.org/resources/${searchResult.id}`,
             provider: "spigot",
             relative_directory: "./plugins/",
             resource_id: searchResult.id,
           });
         }
-        pot[pluginName] = { version: pluginVersion };
+        pot[pluginName.toLocaleLowerCase()] = { version: pluginVersion };
         console.log(
           color.gray(`Found plugin: ${pluginName} @ ${pluginVersion}`),
         );
