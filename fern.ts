@@ -135,15 +135,36 @@ async function CheckUpdate() {
             throw (`update_check_url is not defined in provider: ${item.provider}`);
           }
         } else {
-          const latest = await GetLatestVersion(item);
-          const local = await GetLocalVersion(item.name);
+          const latest: string | number = await GetLatestVersion(item);
+          const local: string | number = await GetLocalVersion(item.name);
+          let latestVersion:
+            | number
+            | IterableIterator<RegExpMatchArray>
+            | number[] = typeof (latest) == "string"
+              ? latest.matchAll(/(\d+)/g)!
+              : latest;
+          let localVersion:
+            | number
+            | IterableIterator<RegExpMatchArray>
+            | number[] = typeof (local) == "string"
+              ? local.matchAll(/(\d+)/g)!
+              : local;
 
-          const latestVersion = typeof (latest) == "string"
-            ? latest.split(".")
-            : latest;
-          const localVersion = typeof (local) == "string"
-            ? local.split(".")
-            : local;
+          if (
+            typeof (latestVersion) == "object" &&
+            typeof (localVersion) == "object"
+          ) {
+            const latestVersionArray: number[] = [];
+            const localVersionArray: number[] = [];
+            for (const iterator of latestVersion) {
+              latestVersionArray.push(Number(iterator[0]));
+            }
+            for (const iterator of localVersion) {
+              localVersionArray.push(Number(iterator[0]));
+            }
+            latestVersion = latestVersionArray;
+            localVersion = localVersionArray;
+          }
 
           if (latestVersion > localVersion) {
             item["VERSION"] = latest;
