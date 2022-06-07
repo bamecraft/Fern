@@ -1,10 +1,10 @@
-import { Command } from "https://deno.land/x/cliffy@v0.20.1/command/mod.ts";
+import { Command } from "https://deno.land/x/cliffy@v0.24.2/command/mod.ts";
 import { download } from "https://pax.deno.dev/katabame/deno-download";
 import { exec } from "https://deno.land/x/exec@0.0.5/mod.ts";
 import { readZip } from "https://deno.land/x/jszip@0.11.0/mod.ts";
 import { expandGlob } from "https://deno.land/std@0.141.0/fs/mod.ts";
-import * as path from "https://deno.land/std@0.125.0/path/mod.ts";
-import * as color from "https://deno.land/std@0.125.0/fmt/colors.ts";
+import * as path from "https://deno.land/std@0.142.0/path/mod.ts";
+import * as color from "https://deno.land/std@0.142.0/fmt/colors.ts";
 import { Config, Pot } from "./@types/fern.d.ts";
 
 let config: Config = {};
@@ -227,8 +227,7 @@ await new Command()
   .command("update", "Update environment to latest.")
   .action(
     async (
-      options: { [options: string]: string | number | boolean },
-      _args: string[],
+      options,
     ) => {
       console.log(color.bold(color.green("Starting update...")));
 
@@ -318,8 +317,7 @@ await new Command()
     "Download example config files. (You might want to run `fern init` than this command)",
   )
   .action(async (
-    options: { [options: string]: string | number | boolean },
-    _args: string[],
+    options,
   ) => {
     console.log(color.bold(color.green("Starting download...")));
     try {
@@ -348,8 +346,7 @@ await new Command()
     "Generate config files from current environment. (For assist writing config files)",
   )
   .action(async (
-    options: { [options: string]: string | number | boolean },
-    _args: string[],
+    options,
   ) => {
     console.log(color.bold(color.green("Starting initialization...")));
 
